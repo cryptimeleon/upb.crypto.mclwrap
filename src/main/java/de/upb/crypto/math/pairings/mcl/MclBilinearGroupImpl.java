@@ -1,6 +1,7 @@
 package de.upb.crypto.math.pairings.mcl;
 
 import com.herumi.mcl.Mcl;
+import com.herumi.mcl.MclConstants;
 import de.upb.crypto.math.factory.BilinearGroupImpl;
 import de.upb.crypto.math.interfaces.mappings.impl.BilinearMapImpl;
 import de.upb.crypto.math.interfaces.mappings.impl.GroupHomomorphismImpl;
@@ -8,8 +9,8 @@ import de.upb.crypto.math.interfaces.mappings.impl.HashIntoGroupImpl;
 import de.upb.crypto.math.serialization.Representation;
 import de.upb.crypto.math.serialization.StringRepresentation;
 
-public class MclBilinearGroupImpl implements BilinearGroupImpl {
-    private static boolean isInitialized = false;
+public abstract class MclBilinearGroupImpl implements BilinearGroupImpl {
+    protected static boolean isInitialized = false;
     protected static MclGroup1Impl g1;
     protected static MclGroup2Impl g2;
     protected static MclGroupTImpl gt;
@@ -17,27 +18,7 @@ public class MclBilinearGroupImpl implements BilinearGroupImpl {
     protected static MclHashIntoG1Impl hashIntoG1 = new MclHashIntoG1Impl(g1);
     protected static MclHashIntoG2Impl hashIntoG2 = new MclHashIntoG2Impl(g2);
 
-
-    public MclBilinearGroupImpl() {
-        init(true);
-    }
-
-    public MclBilinearGroupImpl(Representation repr) {
-        this();
-        if (!repr.str().get().equals("bn254")) {
-            throw new IllegalArgumentException("Invalid representation");
-        }
-    }
-
-    /**
-     * Returns true if the native library is available, false otherwise.
-     */
-    public static boolean isAvailable() {
-        init(false);
-        return isInitialized;
-    }
-
-    protected static void init(boolean printError) {
+    protected static void init(boolean printError, int curveType) {
         if (!isInitialized) {
             String lib = "mcljava";
             try {
@@ -53,7 +34,7 @@ public class MclBilinearGroupImpl implements BilinearGroupImpl {
             }
             try {
                 // TODO: DO we want to offer the other curve type too?
-                Mcl.SystemInit(Mcl.BN254);
+                Mcl.SystemInit(curveType);
             } catch (UnsatisfiedLinkError le) {
                 if (printError) {
                     le.printStackTrace();
@@ -106,11 +87,6 @@ public class MclBilinearGroupImpl implements BilinearGroupImpl {
     @Override
     public HashIntoGroupImpl getHashIntoGT() throws UnsupportedOperationException {
         throw new UnsupportedOperationException("No hash available.");
-    }
-
-    @Override
-    public Representation getRepresentation() {
-        return new StringRepresentation("bn256");
     }
 
     @Override
