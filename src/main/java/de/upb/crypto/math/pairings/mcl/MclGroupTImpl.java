@@ -11,8 +11,8 @@ import de.upb.crypto.math.serialization.Representation;
 public class MclGroupTImpl extends MclGroupImpl {
     protected MclGroupTElementImpl generator = null;
 
-    public MclGroupTImpl() {
-        super();
+    public MclGroupTImpl(int curveType) {
+        super(curveType);
     }
 
     public MclGroupTImpl(Representation repr) {
@@ -53,14 +53,15 @@ public class MclGroupTImpl extends MclGroupImpl {
 
     @Override
     public GroupElementImpl getGenerator() throws UnsupportedOperationException {
-        if (generator != null)
+        if (generator != null && generatorCurveType.equals(curveType))
             return generator;
 
-        G1 g = new MclGroup1Impl().getGenerator().getElement();
-        G2 h = new MclGroup2Impl().getGenerator().getElement();
+        G1 g = new MclGroup1Impl(curveType).getGenerator().getElement();
+        G2 h = new MclGroup2Impl(curveType).getGenerator().getElement();
 
         GT res = new GT();
         Mcl.pairing(res, g, h);
+        generatorCurveType = curveType;
 
         return generator = createElement(res);
     }

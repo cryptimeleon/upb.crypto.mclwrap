@@ -7,12 +7,15 @@ import com.herumi.mcl.Mcl;
 import de.upb.crypto.math.interfaces.mappings.impl.BilinearMapImpl;
 import de.upb.crypto.math.interfaces.structures.group.impl.GroupElementImpl;
 import de.upb.crypto.math.serialization.Representation;
+import de.upb.crypto.math.serialization.annotations.v2.ReprUtil;
+import de.upb.crypto.math.serialization.annotations.v2.Represented;
 
 import java.math.BigInteger;
 import java.util.Objects;
 
 public class MclPairing implements BilinearMapImpl {
 
+    @Represented
     private MclBilinearGroupImpl bilinearGroup;
 
     public MclPairing(MclBilinearGroupImpl bilinearGroup) {
@@ -20,7 +23,7 @@ public class MclPairing implements BilinearMapImpl {
     }
 
     public MclPairing(Representation repr) {
-        this(new MclBilinearGroupImpl(repr));
+        new ReprUtil(this).deserialize(repr);
     }
 
     @Override
@@ -42,7 +45,7 @@ public class MclPairing implements BilinearMapImpl {
     }
 
     public Representation getRepresentation() {
-        return bilinearGroup.getRepresentation();
+        return ReprUtil.serialize(this);
     }
 
     @Override

@@ -9,8 +9,9 @@ import de.upb.crypto.math.interfaces.mappings.impl.HashIntoGroupImpl;
 import de.upb.crypto.math.serialization.Representation;
 import de.upb.crypto.math.serialization.StringRepresentation;
 
-public abstract class MclBilinearGroupImpl implements BilinearGroupImpl {
+public class MclBilinearGroupImpl implements BilinearGroupImpl {
     protected static boolean isInitialized = false;
+    protected static int curveType = -1;
     protected static MclGroup1Impl g1;
     protected static MclGroup2Impl g2;
     protected static MclGroupTImpl gt;
@@ -18,22 +19,27 @@ public abstract class MclBilinearGroupImpl implements BilinearGroupImpl {
     protected static MclHashIntoG1Impl hashIntoG1 = new MclHashIntoG1Impl(g1);
     protected static MclHashIntoG2Impl hashIntoG2 = new MclHashIntoG2Impl(g2);
 
-    protected static void init(boolean printError, int curveType) {
-        if (!isInitialized) {
+    public MclBilinearGroupImpl(int curveType) {
+        init(false, curveType);
+    }
+
+    public static void init(boolean printError, int curveType) {
+        if (curveType != MclBilinearGroupImpl.curveType) {
             String lib = "mcljava";
-            try {
-                System.loadLibrary(lib);
-            } catch (UnsatisfiedLinkError le) {
-                if (printError) {
-                    le.printStackTrace();
-                    String libName = System.mapLibraryName(lib);
-                    System.err.println("If you get this error, you need to put the file " + libName + " into one of the lib directories:");
-                    System.err.println(System.getProperty("java.library.path"));
+            if (!isInitialized) {
+                try {
+                    System.loadLibrary(lib);
+                } catch (UnsatisfiedLinkError le) {
+                    if (printError) {
+                        le.printStackTrace();
+                        String libName = System.mapLibraryName(lib);
+                        System.err.println("If you get this error, you need to put the file " + libName + " into one of the lib directories:");
+                        System.err.println(System.getProperty("java.library.path"));
+                    }
+                    return;
                 }
-                return;
             }
             try {
-                // TODO: DO we want to offer the other curve type too?
                 Mcl.SystemInit(curveType);
             } catch (UnsatisfiedLinkError le) {
                 if (printError) {
@@ -43,10 +49,16 @@ public abstract class MclBilinearGroupImpl implements BilinearGroupImpl {
                 return;
             }
             isInitialized = true;
-            g1 = new MclGroup1Impl();
-            g2 = new MclGroup2Impl();
-            gt = new MclGroupTImpl();
+            MclBilinearGroupImpl.curveType = curveType;
+            g1 = new MclGroup1Impl(curveType);
+            g2 = new MclGroup2Impl(curveType);
+            gt = new MclGroupTImpl(curveType);
         }
+    }
+
+    public static boolean isAvailable() {
+        //init(false, curveType);
+        return isInitialized;
     }
 
     @Override
@@ -90,12 +102,14 @@ public abstract class MclBilinearGroupImpl implements BilinearGroupImpl {
     }
 
     @Override
-    public int hashCode() {
-        return 1;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof MclBilinearGroupImpl;
+    public Representation getRepresentation() {
+        switch (curveType) {
+            case MclConstants.BN254:
+                return new StringRepresentation("bn254");
+            case MclConstants.BLS12_381:
+                return new StringRepresentation("bls12_381");
+            default:
+                throw new IllegalStateException("Unsupported curve type " + curveType);
+        }
     }
 }

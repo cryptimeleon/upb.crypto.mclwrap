@@ -4,19 +4,27 @@ import de.upb.crypto.math.interfaces.structures.group.impl.GroupElementImpl;
 import de.upb.crypto.math.interfaces.structures.group.impl.GroupImpl;
 import de.upb.crypto.math.serialization.Representation;
 import de.upb.crypto.math.serialization.StringRepresentation;
+import de.upb.crypto.math.serialization.annotations.v2.ReprUtil;
+import de.upb.crypto.math.serialization.annotations.v2.Represented;
 
 import java.math.BigInteger;
+import java.util.Objects;
 import java.util.Optional;
 
 public abstract class MclGroupImpl implements GroupImpl {
 
-    public MclGroupImpl() {
-        MclBilinearGroupImpl.init(true);
+    @Represented
+    Integer curveType;
+    @Represented
+    Integer generatorCurveType = -1;
+
+    public MclGroupImpl(int curveType) {
+        this.curveType = curveType;
+        MclBilinearGroupImpl.init(true, curveType);
     }
 
     public MclGroupImpl(Representation repr) {
-        this();
-        //Nothing to do
+        new ReprUtil(this).deserialize(repr);
     }
 
     @Override
@@ -48,16 +56,21 @@ public abstract class MclGroupImpl implements GroupImpl {
 
     @Override
     public Representation getRepresentation() {
-        return new StringRepresentation("BN254");
+        return ReprUtil.serialize(this);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass());
+    public boolean equals(Object other) {
+        if (this == other)
+            return true;
+        if (other == null || this.getClass() != other.getClass())
+            return false;
+        MclGroupImpl obj = (MclGroupImpl) other;
+        return Objects.equals(curveType, obj.curveType);
     }
 
     @Override
     public int hashCode() {
-        return this.getClass().hashCode();
+        return curveType.hashCode();
     }
 }
